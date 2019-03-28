@@ -34,6 +34,7 @@
 #include <linux/mutex.h>
 #include <linux/cdrom.h>
 #include <linux/kernel.h>
+#include <linux/time.h>
 
 #include <scsi/scsi.h>
 #include <scsi/scsi_cmnd.h>
@@ -117,21 +118,23 @@ extern struct usb_driver rts51x_driver;
 
 static inline void get_current_time(u8 *timeval_buf, int buf_len)
 {
-	struct timeval tv;
+	struct timespec64 tv;
+  long usec = 0L;
 
 	if (!timeval_buf || (buf_len < 8))
 		return;
 
-	do_gettimeofday(&tv);
+	ktime_get_real_ts64(&tv);
+  usec = tv.tv_nsec / NSEC_PER_USEC;
 
 	timeval_buf[0] = (u8) (tv.tv_sec >> 24);
 	timeval_buf[1] = (u8) (tv.tv_sec >> 16);
 	timeval_buf[2] = (u8) (tv.tv_sec >> 8);
 	timeval_buf[3] = (u8) (tv.tv_sec);
-	timeval_buf[4] = (u8) (tv.tv_usec >> 24);
-	timeval_buf[5] = (u8) (tv.tv_usec >> 16);
-	timeval_buf[6] = (u8) (tv.tv_usec >> 8);
-	timeval_buf[7] = (u8) (tv.tv_usec);
+	timeval_buf[4] = (u8) (usec >> 24);
+	timeval_buf[5] = (u8) (usec >> 16);
+	timeval_buf[6] = (u8) (usec >> 8);
+	timeval_buf[7] = (u8) (usec );
 }
 
 #define SND_CTRL_PIPE(chip)	((chip)->usb->send_ctrl_pipe)
